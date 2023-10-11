@@ -28,6 +28,27 @@ module DE1_SoC (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 		ones_logic = {3'b0, ones};
 	end
 	
+	//adding switching functionality between task2 (array RAM, 1 port) and task3(RAM 2 PORT)
+	
+	logic switch, wren1, wren2;
+	assign switch = SW[9];
+	
+	always_comb begin
+		if(switch == 1) begin
+			wren1 == 0; 
+			wren2 == 1
+			
+		end
+		else begin
+			wren1 == 1; 
+			wren2 == 0;
+		end
+		
+	end
+	
+	//instantiate 2 port module (the one we just created) and wire it to switch.
+	
+	
 	addressHelp task2In (.address(address), .data(data), .SW1(SW[1]), .SW2(SW[2]), .SW3(SW[3]), .SW4(SW[4]), .SW5(SW[5]), .SW6(SW[6]), .SW7(SW[7]), .SW8(SW[8]));
 	task2 topTask2 (.address(address), .clock(~KEY[0]), .data(data), .wren(SW[0]), .q(q));
 	
