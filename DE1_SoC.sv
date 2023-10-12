@@ -9,9 +9,10 @@ module DE1_SoC (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
     // Turn off all 7-seg displays (active low: 1 = off, 0 = on)
 
 	
-	logic [4:0] address;
+	logic [4:0] address, wraddress, raddress;
 	logic [2:0] data;
 	logic [2:0] q;
+	logic [2:0] q2;
 	
 	//logic for converting address bit to two 4 bit values WRITE
 	
@@ -31,28 +32,35 @@ module DE1_SoC (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	//adding switching functionality between task2 (array RAM, 1 port) and task3(RAM 2 PORT)
 	
 	logic switch, wren1, wren2;
-	assign switch = SW[9];
 	
-	always_comb begin
-		if(switch == 1) begin
-			wren1 == 0; 
-			wren2 == 1
-			
-		end
-		else begin
-			wren1 == 1; 
-			wren2 == 0;
-		end
-		
-	end
+
+	assign switch = SW[9];
+	 
+	
+
+	assign address = {SW[8], SW[7], SW[6], SW[5], SW[4]};
+	assign wraddress = {SW[8], SW[7], SW[6], SW[5], SW[4]};
+	assign data = {SW[3], SW[2], SW[1]};
+	
+	
+	//Switch capability, when switch is 1, two port is active
+	// when switch is 0, one port is active
+	
+	
 	
 	//instantiate 2 port module (the one we just created) and wire it to switch.
 	
 	
-	addressHelp task2In (.address(address), .data(data), .SW1(SW[1]), .SW2(SW[2]), .SW3(SW[3]), .SW4(SW[4]), .SW5(SW[5]), .SW6(SW[6]), .SW7(SW[7]), .SW8(SW[8]));
-	task2 topTask2 (.address(address), .clock(~KEY[0]), .data(data), .wren(SW[0]), .q(q));
+	task2 topTask2 (.address, .clock(CLOCK_50), .data, .wren(wren1), .q(q));
 	
-	seg7 hex5(.hex(tens_logic), .leds(HEX5));
+	// raddress hooked up with counter
+	
+	ram32x3port2 twoPort (.clock(~KEY[0]), .data, .raddress(), .wraddress, .wren(wren2), .q(q2));
+	
+	//if SW[9] = 1; choose q2
+	//if SW[9] = 0; choose q
+	//hex is q, hex1 is q2, choose is Sw[9]
+	seg7 hex5(.hex(tens_logic), .hex1(q2), .choose(switch) .leds(HEX5));
 	seg7 hex4(.hex(ones_logic), .leds(HEX4));
 	
 	seg7 hex1(.hex(data), .leds(HEX1));
