@@ -45,7 +45,8 @@ module DE1_SoC (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	
 	//Switch capability, when switch is 1, two port is active
 	// when switch is 0, one port is active
-	
+
+	//always comb (if wren & SW[9]) (if wren & ~SW[9])
 	
 	
 	//instantiate 2 port module (the one we just created) and wire it to switch.
