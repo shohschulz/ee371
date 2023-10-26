@@ -1,4 +1,4 @@
-module topLevel (CLOCK_50, CLOCK2_50, SW, KEY, FPGA_I2C_SCLK, FPGA_I2C_SDAT, AUD_XCK, 
+module toplevel (CLOCK_50, CLOCK2_50, SW, KEY, FPGA_I2C_SCLK, FPGA_I2C_SDAT, AUD_XCK, 
 		        AUD_DACLRCK, AUD_ADCLRCK, AUD_BCLK, AUD_ADCDAT, AUD_DACDAT);
 
 	input CLOCK_50, CLOCK2_50;
@@ -14,7 +14,7 @@ module topLevel (CLOCK_50, CLOCK2_50, SW, KEY, FPGA_I2C_SCLK, FPGA_I2C_SDAT, AUD
 	
 	input logic [9:0] SW;
 	
-	parameter N = 3;
+	parameter N = 8;
 	
 	//Task3
 	
@@ -33,40 +33,72 @@ module topLevel (CLOCK_50, CLOCK2_50, SW, KEY, FPGA_I2C_SCLK, FPGA_I2C_SDAT, AUD
 	wire [23:0] outData;
 	wire [23:0] currDataLeft;
 	wire [23:0] currDataRight;
-	wire [23:)] currData;
+	wire [23:0] currData;
 	
 	
 	always_ff @(posedge CLOCK_50) begin
-		if(SW[9] ) begin
-			currDataLeft <= outData;
-			currDataRight <= outData;
+		//task2
+		if(SW[9]) begin
+			
+			if(SW[8]) begin
+				currDataLeft <= outData2;
+				currDataRight <= outData2;
+				
+			end
+			else if (~SW[8]) begin
+				currDataLeft <= outData;
+				currDataRight <= outData;
+				
+			end
+			fDataIn <= outData; 
+			
 		end
-		else if (~SW[9])begin
-			currDataLeft <= readdata_left;
-			currDataRight <= readdata_right;
+		//task1
+		else if (~SW[9]) begin
+			if(SW[8]) begin
+				currDataLeft <= outData2;
+				currDataRight <= outData2;
+			end
+			else if (~SW[8]) begin
+				currDataLeft <= readdata_left;
+				currDataRight <= readdata_right;
+			end
+			fDataIn <= readdata_left;
 		end
 	end
+	
+	
+	
 	counter currentAddress(.curr(currAdd), .clk(CLOCK_50));
 	
 	ROM task2(.address(currAdd), .clock(CLOCK_50), .q(outData));
 	
 	logic empty, full; 
 	logic [23:0] fDataIn;
+	logic [23:0] w;
 	logic [23:0] fDataOut;
 	//divide by N, shift right
-	assign fDataIn = writeData_left >> N;
 	
-	FIFO #(.DATA_WIDTH(24), .ADDR_WIDTH(N)) fi (.clk(CLOCK_50), .reset, .rd(read), .wr(write), .empty, .full, .w_data(fDataIn), .r_data(fDataOut));
+	//assign w = fDataIn >> N;
+	
+	assign w = {{N{fDataIn[23]}}, fDataIn[23:N]};
+	//switching capability
+	//if SW[8], use filtered data
+	// else dont; 
+
+	
+	fifo #(.DATA_WIDTH(24), .ADDR_WIDTH(N)) fi (.clk(CLOCK_50), .reset, .rd(read & full), .wr(write), .empty, .full, .w_data(w), .r_data(fDataOut));
 	//only writing when fifo buffer is full, otherwise zero.
 	//mux2_1 mx21 (.output_bit, .input_bit_0(0), .input_bit_1(fDataOut), .select_bit(full));
-	logic [23:0] muxOut; 
-	assign muxOut = full ? fDataOut: 0; 
+//	logic [23:0] muxOut; 
+//	assign muxOut = full ? fDataOut: w;  
 	
 	logic [23:0] adderWire;
 	logic [23:0] outData2; 
 	//adder
-	assign adderWire = fDataIn + (-1 * muxOut); 
-	accumlator acc (.out(outData2), .in(fDataOut), .clk(CLOCK_50), .reset);
+//	assign adderWire = full ? fDataOut + (-1 * muxOut) : w; 
+	assign adderWire = full ? w + (-1 * fDataOut) : w; 
+	accumulator acc (.out(outData2), .in(adderWire), .clk(CLOCK_50), .reset, .enable(read));
 	
 	
 	assign writedata_left = currDataLeft;
@@ -129,4 +161,5 @@ module topLevel (CLOCK_50, CLOCK2_50, SW, KEY, FPGA_I2C_SCLK, FPGA_I2C_SDAT, AUD
 	);
 
 endmodule
+
 
