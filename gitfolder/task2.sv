@@ -14,9 +14,9 @@ module task2(A, start, reset, Loc, Done, Found, clk);
 	
 	
 	
-	task2_control control(A, start, middle, upper, lower, reset, search_up, search_low, loadReady, finished, conFound, clk);
+	task2_control control(.A, .start, .middle, .upper, .lower, .reset, .search_up, .search_low, .loadReady, .finished, .conFound, .clk);
 	
-	task2_dp datapath(A, search_up, search_low, loadReady, finished, Loc, Done, Found, conFound, upper, middle, lower, clk);
+	task2_dp datapath(.search_up, .search_low, .loadReady, .finished, .Loc, .Done, .Found, .conFound, .upper, .middle, .lower, .clk);
 
 endmodule 
 
@@ -38,10 +38,13 @@ module task2_control(A, start, middle, upper, lower, reset, search_up, search_lo
 			S0: begin //idle state
 				if(start) ns = S1;
 				
-				else loadReady = 1; ns = S0;
+				else begin
+				loadReady = 1; ns = S0;
+				end
 			end
 			S1: begin //starting state, pick center value of array in datapath
-				if (upper == lower) ns = S3;
+				if (upper == lower) 
+					ns = S3;
 				else if(A < middle) begin 
 					search_low = 1; 
 					ns = S1; 
@@ -80,16 +83,16 @@ endmodule
 
 
 
-module task2_dp(A, search_up, search_low,loadReady, finished, Loc, Done, conFound, Found, upper, middle, lower, clk);
+module task2_dp(search_up, search_low,loadReady, finished, Loc, Done, conFound, Found, upper, middle, lower, clk);
 	
 	input logic search_up, search_low, loadReady, finished, conFound, clk;
-	input logic [7:0] A;
+	
 	output logic Done, Found;
 	output logic [4:0] Loc; //final location
 	output logic [7:0] middle; //information in middle address
 	output logic [4:0] upper, lower;
 	logic [4:0] address; //current address
-	logic [4:0] middleAddr; //
+	logic [4:0] middleAddr; 
 	parameter N = 32;
 	BSA_RAM ramSub(.address(middleAddr),
 		.clock(clk),
@@ -101,20 +104,20 @@ module task2_dp(A, search_up, search_low,loadReady, finished, Loc, Done, conFoun
 	always_ff @(posedge clk) begin
 		if(search_up) begin
 			upper <= upper;
-			lower <= middleAddr;
+			lower <= middleAddr - 1;
 		end
 		
 		if(search_low) begin
-			upper <= middleAddr; 
+			upper <= middleAddr + 1; 
 			lower <= lower;
 		end
-		
-		if(finished)
-			Done <= 1;
 			
-		if(conFound) begin
-			Loc <= address; 
+		if(conFound && finished) begin
+			Loc <= middleAddr; 
 			Found <= 1;
+			Done <= 1; 
+		end
+		else if(~conFound && finished) begin
 			Done <= 1; 
 		end
 				
@@ -124,7 +127,7 @@ module task2_dp(A, search_up, search_low,loadReady, finished, Loc, Done, conFoun
 		end
 	end
 	
-	assign middleAddr = (upper - lower) / 2;
+	assign middleAddr = (upper + lower) / 2;
 		
 endmodule 
 
@@ -151,8 +154,8 @@ module task2_tb();
 		A <= 7'b0000011; @(posedge clk);
 		start <= 0; @(posedge clk);
 		start <= 1; @(posedge clk);
-		start <= 0; @(posedge clk);
-		for (int i = 0; i < 10; i++) begin
+		
+		for (int i = 0; i < 15; i++) begin
 			@(posedge clk);
 		end
 		
