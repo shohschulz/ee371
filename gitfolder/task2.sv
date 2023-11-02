@@ -62,25 +62,52 @@ endmodule
 
 
 
-module task2_dp(A, search_up, search_low, search_mid, Loc, Done, Found, less_than, greater_than, clk);
-
-	input logic search_up, search_low, clk;
+module task2_dp(A, search_up, search_low,loadReady, finished, Loc, Done, Found, upper, middle, lower, clk);
+	
+	input logic search_up, search_low, loadReady, finished, Found, clk;
 	input logic [7:0] A;
-	output logic Done, Found, less_than, greater_than;
-	output logic [4:0] Loc;
-
-	BSA_RAM ramSub(address,
-		clock,
-		data,
-		wren,
-		q);
+	output logic Done, Found;
+	output logic [4:0] Loc; //final location
+	output logic [7:0] middle //information in middle address
+	output logic [4:0] upper, lower;
+	logic [4:0] address; //current address
+	logic [4:0] middleAddr //
+	parameter N = 32;
+	BSA_RAM ramSub(.address(middleAddr),
+		.clock(clk),
+		.data,
+		.wren,
+		.q(middle));
 		
+	
 	always_ff @(posedge clk) begin
-		if()
+		if(search_up) begin
+			upper <= upper;
+			lower <= middleAddr;
+		end
+		
+		if(search_low) begin
+			upper <= middleAddr; 
+			lower <= lower;
+		end
+		
+		if(finished)
+			Done <= 1;
+			
+		if(Found) begin
+			Loc <= address; 
+			Done <= 1; 
+		end
+				
+		if(loadReady) begin   
+			upper <= N-1;
+			lower <= 0;
+		end
+	end
 	
-	
-
+	assign middleAddr = (upper - lower) / 2;
+		
 endmodule 
-
+	
 
 
