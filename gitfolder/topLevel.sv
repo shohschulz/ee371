@@ -5,13 +5,6 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5;	// active low
 	output logic [9:0] LEDR;
 	
-//	//start off 
-//	assign HEX0 = 7b'1;
-//	assign HEX1 = 7b'1;
-//	assign HEX2 = 7b'1;
-//	assign HEX3 = 7b'1;
-//	assign HEX4 = 7b'1;
-//	assign HEX5 = 7b'1;
 	
 	//assigning inputs from the board 
 	logic start, reset;
@@ -24,18 +17,17 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	
 	
 	//wires to connect the cntrl to the datapath
-	logic zeroFlag, A0, result, rShift, done, increment, loadReady;  
-	logic [7:0] Load_A; 
+	logic result, rShift, done, increment, loadReady;  
+	logic [7:0] Awire; 
 	//outputs from datapath to be displayed on the board
 	logic [3:0] sumToBoard; 
 	logic finished; //done state
 	
 	
-	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .zeroFlag, .A0, .result, .rShift, .done, .increment, .loadReady);
+	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .Awire, .result, .rShift, .done, .increment, .loadReady);
 	
-	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .zeroFlag, .A0, .sumToBoard, .finished);
-					  
-	//display sum, buggy still 
+	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished, .Awire);
+					   
 	seg7 display (.hex(sumToBoard), .leds(HEX0));
 	
 	
@@ -65,7 +57,7 @@ module topLeveltb();
 	initial begin
 		KEY[0] <= 0; SW[7:0] <= 8'b00000000; KEY[3] <= 1; @(posedge CLOCK_50);	
 		KEY[0] <= 1; @(posedge CLOCK_50); 
-		SW[7:0] <= 8'b01000100; KEY[3] <= 1; @(posedge CLOCK_50);
+		SW[7:0] <= 8'b01000101; KEY[3] <= 1; @(posedge CLOCK_50);
 	   KEY[3] <= 0; @(posedge CLOCK_50);
 		
 		//gives the BCA time to compute everything
