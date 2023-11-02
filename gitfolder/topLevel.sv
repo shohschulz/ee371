@@ -16,6 +16,7 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	assign reset = ~KEY[0];
 	
 	
+	
 	//wires to connect the cntrl to the datapath
 	logic result, rShift, done, increment, loadReady;  
 	logic [7:0] Awire; 
@@ -26,7 +27,7 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	
 	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .Awire, .result, .rShift, .done, .increment, .loadReady);
 	
-	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished, .Awire);
+	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished(LEDR[9]), .Awire);
 					   
 	seg7 display (.hex(sumToBoard), .leds(HEX0));
 	
