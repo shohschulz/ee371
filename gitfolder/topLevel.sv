@@ -15,7 +15,15 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	//active low
 	assign reset = ~KEY[0];
 	
+	logic [6:0] conflictingHex1, conflictingHex2;
+	logic conflictingLEDR9, conflictingLEDR92;
+	logic conflictingLEDR02;
+	logic [4:0] Loc;
+	task2(.A, .start, .reset, .Loc, .done(conflictingLEDR92), .found(conflictingLEDR02), .clk(CLOCK_50));
+
+	seg7 msb (.hex({3'b0, Loc[4]}), .leds(HEX1));
 	
+	seg7 lsb (.hex(Loc[3:0]), .leds(conflictingHex));
 	
 	//wires to connect the cntrl to the datapath
 	logic result, rShift, done, increment, loadReady;  
@@ -23,17 +31,30 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	//outputs from datapath to be displayed on the board
 	logic [3:0] sumToBoard; 
 	logic finished; //done state
-	
+		
 	
 	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .Awire, .result, .rShift, .done, .increment, .loadReady);
 	
-	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished(LEDR[9]), .Awire);
+	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished(conflictingLEDR9), .Awire);
 					   
-	seg7 display (.hex(sumToBoard), .leds(HEX0));
+	seg7 display (.hex(sumToBoard), .leds(conflictingHex2));
 	
+	
+	always_ff @(posedge CLOCK_50) begin
+		if(SW[9]) begin
+				HEX0 <= conflictingHex2;
+				LEDR[9] <= conflictingLEDR92;
+				LEDR[0] <= conflictingLEDR02;
+		end
+		else begin
+				HEX0 <= conflictingHex1;
+				LEDR[9] <= conflictingLEDR9;
+				LEDR[0] <= 0;
+		end
+			
+	end
 	
 endmodule
-
 
 module topLeveltb();
 
