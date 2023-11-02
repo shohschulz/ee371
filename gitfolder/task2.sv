@@ -1,20 +1,15 @@
-module task2(SW7, SW6, SW5, SW4, SW3, SW2, SW1, SW0, HEX1, HEX0, KEY3, KEY0, LEDR9, LEDR0, clk);
+module task2(A, start, reset, Loc, done, found, clk);
 
-	input logic SW7, SW6, SW5, SW4, SW3, SW2, SW1, SW0, KEY3, KEY0, clk;
+	input logic [7:0] A; 
+	input logic start, reset, clk; 
+	output logic [4:0] Loc;
 	
-	output logic [6:0] HEX1, HEX0;
+	output logic done, found; 
 	
-	output logic LEDR9, LEDR0;
-	
-	assign start = ~KEY[3];
-	assign reset = ~KEY[0];
 	
 	logic [7:0] A, middle;
 	logic [5:0] upper, lower;
 	logic search_up, search_low, loadReady, finished, Found;
-	
-	
-	assign A = {SW7, SW6, SW5, SW4, SW3, SW2, SW1, SW0};
 	
 	
 	
@@ -23,6 +18,7 @@ module task2(SW7, SW6, SW5, SW4, SW3, SW2, SW1, SW0, HEX1, HEX0, KEY3, KEY0, LED
 	task2_dp datapath(A, search_up, search_low, loadReady, finished, Loc, Done, Found, upper, middle, lower, clk);
 
 endmodule 
+
 
 
 module task2_control(A, start, middle, upper, lower, reset, search_up, search_low, loadReady, finished, Found, clk);
