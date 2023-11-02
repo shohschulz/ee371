@@ -5,13 +5,13 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5;	// active low
 	output logic [9:0] LEDR;
 	
-	//start off 
-	assign HEX0 = 7b'1;
-	assign HEX1 = 7b'1;
-	assign HEX2 = 7b'1;
-	assign HEX3 = 7b'1;
-	assign HEX4 = 7b'1;
-	assign HEX5 = 7b'1;
+//	//start off 
+//	assign HEX0 = 7b'1;
+//	assign HEX1 = 7b'1;
+//	assign HEX2 = 7b'1;
+//	assign HEX3 = 7b'1;
+//	assign HEX4 = 7b'1;
+//	assign HEX5 = 7b'1;
 	
 	//assigning inputs from the board 
 	logic start, reset;
@@ -31,9 +31,10 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	logic finished; //done state
 	
 	
-	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .A, .reset, .zeroFlag, .A0, .Load_A, .result, .rShift, .done, .increment, .loadReady);
-	BCA_datapath dp (.clk(CLOCK_50), .Load_A, .rShift, .result, .done, .increment, .zeroFlag, .A0, .sumToBoard, .finished);
-						  
+	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .zeroFlag, .A0, .result, .rShift, .done, .increment, .loadReady);
+	
+	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .zeroFlag, .A0, .sumToBoard, .finished);
+					  
 	//display sum, buggy still 
 	seg7 display (.hex(sumToBoard), .leds(HEX0));
 	
