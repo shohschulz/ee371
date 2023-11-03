@@ -1,168 +1,129 @@
 `timescale 1 ps / 1 ps
-module task2(A, start, reset, Loc, Done, Found, clk);
 
-	input logic [7:0] A; 
-	input logic start, reset, clk; 
-	output logic [4:0] Loc;
-	
-	output logic Done, Found; 
-	
-	
-	logic [7:0] middle;
-	logic [4:0] upper, lower;
-	logic search_up, search_low, loadReady, finished, conFound;
-	
-	logic [4:0] middleAddr;
-	 
-	
-	task2_control control(.A, .start, .middle, .upper, .lower, .reset, .search_up, .search_low, .loadReady, .finished, .conFound, .clk);
-	
-	task2_dp datapath(.search_up, .search_low, .loadReady, .finished, .Loc, .Done, .Found, .conFound, .upper, .lower, .middleAddr, .clk);
-	
-	BSA_RAM ramSub(.address(middleAddr),
-		.clock(clk),
-		.data(0),
-		.wren(0),
-		.q(middle));
-endmodule 
+module task2 (
+  // searcher top module. Instantiate controller and datapath.
+  // use a wizard-generated RAM to store content to be searched.
 
+  output logic found, done,
+  output logic [4:0] addr,
+  input logic [7:0] target,
+  input logic clk, reset, startSig
+  );
 
+  logic [7:0] curr_data;
+  logic [4:0] new_addr;  // (p1 + p2) / 2
+  logic [4:0] p1, p2;  // pointers specifying search range
 
+  // control signals
+  logic init_all, update_addr, set_p1, set_p2, set_found, set_done;
 
-module task2_control(A, start, middle, upper, lower, reset, search_up, search_low, loadReady, finished, conFound, clk);
+  searcher_controller C (.*);
+  searcher_datapath D (.*);
 
-	input logic start, reset, clk;
-	input logic [7:0] middle; 
-	input logic [4:0] upper, lower;
-	input logic [7:0] A;
-	output logic search_up, search_low, loadReady, finished, conFound;
+  ram32x8 RAM (
+    .q(curr_data),
+    .address(new_addr),
+    .clock(clk),
+    .data(),
+    .wren(1'b0)
+  );
 
-	enum{S0, S1, S2, S3} ps, ns;
-	always_comb begin
-	search_up = 0; search_low = 0; loadReady = 0; finished = 0; conFound = 0;
-		case(ps)
-			S0: begin //idle state
-				if(start) ns = S1;
-				
-				else begin
-				loadReady = 1; ns = S0;
-				end
-			end
-			S1: begin //starting state, pick center value of array in datapath
-				if (upper == lower) 
-					ns = S3;
-				else if(A < middle) begin 
-					search_low = 1; 
-					ns = S1; 
-				end
-				else if(A > middle) begin 
-					search_up = 1; 
-					ns = S1;
-				end
-				else ns = S2;
-				 
-			end
-			S2: begin //done state
-				finished = 1;
-				conFound = 1;
-				ns = S2;
-				
-			end
-			S3: begin //not found state
-				finished = 1;
-				conFound = 0;
-				ns = S3;
-				
-			end
-			
-			default: ns = S0;
-		endcase
-	end
-	
-	always_ff @(posedge clk) begin
-		if(reset) ps <= S0;
-		else ps <= ns;
-		
-	
-	end
-endmodule 
-
-
-
-module task2_dp(search_up, search_low,loadReady, finished, Loc, Done, conFound, Found, upper, lower, middleAddr, clk);
-	
-	input logic search_up, search_low, loadReady, finished, conFound, clk;
-	
-	output logic Done, Found;
-	output logic [4:0] Loc; //final location
-	output logic [4:0] upper, lower;
-	output logic [4:0] middleAddr; 
-	parameter N = 32;
-	
-		
-	
-	always_ff @(posedge clk) begin
-		if(search_up) begin
-			upper <= upper;
-			lower <= middleAddr - 1;
-		end
-		
-		if(search_low) begin
-			upper <= middleAddr + 1; 
-			lower <= lower;
-		end
-			
-		if(conFound && finished) begin
-			Loc <= middleAddr; 
-			Found <= 1;
-			Done <= 1; 
-		end
-		else if(~conFound && finished) begin
-			Done <= 1; 
-		end
-				
-		if(loadReady) begin   
-			upper <= N-1;
-			lower <= 0;
-		end
-	end
-	
-	assign middleAddr = (upper + lower) / 2;
-		
-endmodule 
-
-module task2_tb();
-
-	logic [7:0] A; 
-	logic start, reset, clk; 
-	logic [4:0] Loc;
-	
-	logic Done, Found; 
-	
-	task2 dut (.*);
-	
-	parameter CLOCK_PERIOD = 100;
-	initial begin
-		clk <= 0;
-		forever #(CLOCK_PERIOD/2) clk <= ~clk;
-	end
-		
-	initial begin
-		reset <= 0; @(posedge clk);
-		reset <= 1; @(posedge clk);
-		reset <= 0; @(posedge clk);
-		A <= 7'b0000011; @(posedge clk);
-		start <= 0; @(posedge clk);
-		start <= 1; @(posedge clk);
-		
-		for (int i = 0; i < 15; i++) begin
-			@(posedge clk);
-		end
-		
-		$stop;
-	end
 endmodule
-	
 
+module searcher_controller (
 
+  output logic init_all, update_addr, set_p1, set_p2, set_found, set_done,
+  input logic [7:0] target,
+  input logic [7:0] curr_data,
+  input logic [4:0] p1, p2,
+  input logic clk, reset, startSig
+  );
 
+  logic start;
+  enum {IDLE, LOOP, WAIT, DONE} ps, ns;
+
+  always_ff @(posedge clk) begin
+    if (reset) begin
+      ps <= IDLE;
+		start <= 1'b0;
+	 end
+    else
+      ps <= ns;
+		
+	 if (startSig) begin
+		start <= 1'b1;
+	 end
+  end
+
+  always_comb begin
+    case (ps)
+      IDLE: ns = start ? LOOP : IDLE;
+      LOOP: ns = (p1 > p2) ? DONE : WAIT;
+      WAIT: ns = (curr_data == target) ? DONE : LOOP;
+      DONE: ns = start ? DONE : IDLE;
+    endcase
+    // assign control signals
+    init_all = (ps == IDLE);
+    update_addr = (ps == LOOP);
+    set_p1 = (ps == LOOP) & (curr_data < target);
+    set_p2 = (ps == LOOP) & (curr_data > target);
+    set_found = (ps == LOOP) & (curr_data == target);
+    set_done = (ps == DONE);
+  end
+endmodule
+
+module searcher_datapath (
+  output logic [4:0] p1, p2, addr,
+  output logic found, done,
+  output logic [4:0] new_addr,
+  input logic init_all, update_addr, set_p1, set_p2, set_found, set_done,
+  input logic clk
+  );
+
+  assign new_addr = (p1 + p2) / 2;
+
+  always_ff @(posedge clk) begin
+    if (init_all) begin
+      p1 <= 5'd0;
+      p2 <= 5'd31;
+      addr <= 5'd0;
+      done <= 0;
+      found <= 0;
+    end
+    if (update_addr)
+      addr <= new_addr;
+    if (set_p1)
+      p1 <= new_addr + 1;
+    if (set_p2)
+      p2 <= new_addr - 1;
+    if (set_found)
+      found <= 1;
+    if (set_done || (p1 == p2))
+      done <= 1;
+
+  end
+endmodule
+
+module task2_tb ();
+  logic found, done;
+  logic [4:0] addr;
+  logic [7:0] target;
+  logic clk, reset, startSig;
+
+  task2 dut (.*);
+
+  parameter CLOCK_PERIOD = 100;
+  initial begin
+    clk <= 0;
+    forever #(CLOCK_PERIOD/2) clk <= ~clk;
+  end
+
+  integer i;
+  initial begin
+    reset <= 1; @(posedge clk);
+    reset <= 0; target <= 8'd34; startSig <= 1; @(posedge clk);
+    for (i = 0; i < 32; i++)
+      @(posedge clk);
+    $stop();
+  end
+endmodule
