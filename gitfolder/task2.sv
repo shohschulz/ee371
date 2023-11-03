@@ -12,12 +12,18 @@ module task2(A, start, reset, Loc, Done, Found, clk);
 	logic [4:0] upper, lower;
 	logic search_up, search_low, loadReady, finished, conFound;
 	
-	
+	logic [4:0] middleAddr;
+	 
 	
 	task2_control control(.A, .start, .middle, .upper, .lower, .reset, .search_up, .search_low, .loadReady, .finished, .conFound, .clk);
 	
-	task2_dp datapath(.search_up, .search_low, .loadReady, .finished, .Loc, .Done, .Found, .conFound, .upper, .middle, .lower, .clk);
-
+	task2_dp datapath(.search_up, .search_low, .loadReady, .finished, .Loc, .Done, .Found, .conFound, .upper, .lower, .middleAddr, .clk);
+	
+	BSA_RAM ramSub(.address(middleAddr),
+		.clock(clk),
+		.data(0),
+		.wren(0),
+		.q(middle));
 endmodule 
 
 
@@ -83,22 +89,16 @@ endmodule
 
 
 
-module task2_dp(search_up, search_low,loadReady, finished, Loc, Done, conFound, Found, upper, middle, lower, clk);
+module task2_dp(search_up, search_low,loadReady, finished, Loc, Done, conFound, Found, upper, lower, middleAddr, clk);
 	
 	input logic search_up, search_low, loadReady, finished, conFound, clk;
 	
 	output logic Done, Found;
 	output logic [4:0] Loc; //final location
-	output logic [7:0] middle; //information in middle address
 	output logic [4:0] upper, lower;
-	logic [4:0] address; //current address
-	logic [4:0] middleAddr; 
+	output logic [4:0] middleAddr; 
 	parameter N = 32;
-	BSA_RAM ramSub(.address(middleAddr),
-		.clock(clk),
-		.data(0),
-		.wren(0),
-		.q(middle));
+	
 		
 	
 	always_ff @(posedge clk) begin
@@ -163,7 +163,6 @@ module task2_tb();
 	end
 endmodule
 	
-
 
 
 
