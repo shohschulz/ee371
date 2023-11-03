@@ -15,15 +15,31 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	//active low
 	assign reset = ~KEY[0];
 	
-	logic [6:0] conflictingHex1, conflictingHex2;
-	logic conflictingLEDR9, conflictingLEDR92;
-	logic conflictingLEDR02;
+//	logic [6:0] conflictingHex1, conflictingHex2;
+//	logic conflictingLEDR9, conflictingLEDR92;
+//	logic conflictingLEDR02;
 	logic [4:0] Loc;
-	task2(.A, .start, .reset, .Loc, .done(conflictingLEDR92), .found(conflictingLEDR02), .clk(CLOCK_50));
-
-	seg7 msb (.hex({3'b0, Loc[4]}), .leds(HEX1));
+	logic found;
+	logic task2_done;
+	logic [4:0] addr;
+	task2(.found, .done(task2_done), .addr, .target(A), .clk(CLOCK_50), .reset, .startSig(start));
+	logic [3:0] ones_num, tens_num, b0, b1, out2_ones, out2_tens;
 	
-	seg7 lsb (.hex(Loc[3:0]), .leds(conflictingHex));
+	assign b0 = addr % 5'd16;
+   assign b1 = addr / 5'd16;
+	always_comb begin 
+		if(found) begin
+			out2_ones = b0;
+			out2_tens = b1;
+		end
+		else begin
+			out2_ones = 4'b0000;
+			out2_tens = 4'b0000;
+		end
+   end
+	seg7 tens (.hex(tens_num), .leds(HEX1));
+	
+	seg7 ones (.hex(ones_num), .leds(HEX0));
 	
 	//wires to connect the cntrl to the datapath
 	logic result, rShift, done, increment, loadReady;  
@@ -35,21 +51,23 @@ module topLevel (CLOCK_50, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW);
 	
 	BCA_cntrl cntrl (.clk(CLOCK_50), .start, .reset, .Awire, .result, .rShift, .done, .increment, .loadReady);
 	
-	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished(conflictingLEDR9), .Awire);
+	BCA_datapath dp (.clk(CLOCK_50), .A, .rShift, .result, .done, .increment, .loadReady, .sumToBoard, .finished(finished), .Awire);
 					   
-	seg7 display (.hex(sumToBoard), .leds(conflictingHex2));
+//	seg7 display (.hex(sumToBoard), .leds(conflictingHex2));
 	
 	
 	always_ff @(posedge CLOCK_50) begin
 		if(SW[9]) begin
-				HEX0 <= conflictingHex2;
-				LEDR[9] <= conflictingLEDR92;
-				LEDR[0] <= conflictingLEDR02;
+			tens_num <= out2_tens;
+			ones_num <= out2_ones;
+			LEDR[9] <= task2_done;
+			LEDR[0] <= found;
 		end
 		else begin
-				HEX0 <= conflictingHex1;
-				LEDR[9] <= conflictingLEDR9;
-				LEDR[0] <= 0;
+			tens_num <= 4'b0000;
+			ones_num <= sumToBoard;
+			LEDR[9] <= finished;
+			LEDR[0] <= 0;
 		end
 			
 	end
@@ -77,7 +95,8 @@ module topLeveltb();
 	topLevel dut (.*); 
 	
 	initial begin
-		KEY[0] <= 0; SW[7:0] <= 8'b00000000; KEY[3] <= 1; @(posedge CLOCK_50);	
+		
+		SW[9] <= 0; KEY[0] <= 0; SW[7:0] <= 8'b00000000; KEY[3] <= 1; @(posedge CLOCK_50);	
 		KEY[0] <= 1; @(posedge CLOCK_50); 
 		SW[7:0] <= 8'b01000101; KEY[3] <= 1; @(posedge CLOCK_50);
 	   KEY[3] <= 0; @(posedge CLOCK_50);
