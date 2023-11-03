@@ -7,7 +7,7 @@ module BCA_cntrl(clk, start, reset, Awire, result, rShift, done, increment, load
 	
 	//control signals
 	output logic rShift, result, done, increment, loadReady; 
-	
+	logic startSig;
 	
 	
 	enum {S1, S2, S3} ps, ns; 
@@ -19,7 +19,7 @@ always_comb begin
         S1: begin
             // sets A to 0;
             result = 1;
-            if (start == 1) begin
+            if (startSig == 1) begin
                 ns = S2;
             end
             else begin
@@ -42,7 +42,7 @@ always_comb begin
         end
         S3: begin
             done = 1;
-            if (start == 1) begin
+            if (startSig == 1) begin
                 ns = S3;
             end
             else begin
@@ -54,11 +54,16 @@ end
 
 	
 	always_ff @(posedge clk) begin
-		if(reset)
+		if(reset) begin
 			ps <= S1; 
-		else
+			startSig <= 0;
+		end
+		else begin
 			ps <= ns; 
-	
+		end
+		if (start) begin
+			startSig <= 1'b1;
+		end
 	end
 endmodule
 
