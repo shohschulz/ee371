@@ -50,7 +50,7 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 		.reset			(1'b0), 
 		.x, 
 		.y,
-		.pixel_color	(1'b1), 
+		.pixel_color	(SW[8]), 
 		.pixel_write	(1'b1),
 		.VGA_R, 
 		.VGA_G, 
@@ -60,15 +60,89 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 		.VGA_VS,
 		.VGA_BLANK_n	(VGA_BLANK_N), 
 		.VGA_SYNC_n		(VGA_SYNC_N));
-				
+	
+	
+	Clock_divider clkdivider(.clock_in(CLOCK_50), .clock_out(clk));
 	logic done;
 
-	line_drawer lines (.clk(CLOCK_50), .reset(SW[0]),.x0, .y0, .x1, .y1, .x, .y, .done);
+	line_drawer lines (.clk, .reset(SW[0]|| done),.x0, .y0, .x1, .y1, .x, .y, .done);
 	
-	assign LEDR[9] = done;
-	assign x0 = 0;
-	assign y0 = 0;
-	assign x1 = 20;
-	assign y1 = 100;
+	assign LEDR[9] = (ps == doneS);
+//	assign x0 = 0;
+//	assign y0 = 0;
+//	assign x1 = 20;
+//	assign y1 = 100;
+	
+	enum {start, S1, S2, S3, doneS} ps, ns;
+	
+	always_comb begin
+		case(ps)
+			start: if(SW[0]) ns = S1; 
+						else ns = start;
+			S1: if(done) ns = S2;
+						else ns = S1;
+			S2: if(done) ns = S3;
+						else ns = S2;
+			S3: if(done) ns = doneS;
+						else ns = S3;
+			doneS: ns = doneS; 
+		endcase
+	end
+	
+	always_ff @(posedge clk) begin
+		if(SW[9]) ps <= start;
+		else ps <= ns;
+	end
+	
+	always_ff @(posedge clk) begin
+		if (ps == S1) begin
+			x0 <= 300;
+			y0 <= 220;
+			x1 <= 300;
+			y1 <= 260;
+		end
+		if (ps == S2) begin
+			x0 <= 340;
+			y0 <= 220;
+			x1 <= 340;
+			y1 <= 260;
+		end
+		//dummy stage, used for extra clock cycle
+		if (ps == S3) begin
+			x0 <= 0;
+			y0 <= 0;
+			x1 <= 0;
+			y1 <= 0;
+		end
+		if (ps == doneS) begin
+			x0 <= 0;
+			y0 <= 0;
+			x1 <= 0;
+			y1 <= 0;
+		end
+	end
+
+
 
 endmodule  // DE1_SoC
+
+
+module Clock_divider(clock_in,clock_out);
+	input logic clock_in; // input clock on FPGA
+	output logic clock_out; // output clock after dividing the input clock by divisor
+	logic[27:0] counter=28'd0;
+	parameter DIVISOR = 50_000_000;
+	// The frequency of the output clk_out
+	//  = The frequency of the input clk_in divided by DIVISOR
+	// For example: Fclk_in = 50Mhz, if you want to get 1Hz signal to blink LEDs
+	// You will modify the DIVISOR parameter value to 28'd50.000.000
+	// Then the frequency of the output clk_out = 50Mhz/50.000.000 = 1Hz
+	always @(posedge clock_in)
+	begin
+		 counter <= counter + 28'd1;
+		 if(counter>=(DIVISOR-1))
+		  counter <= 28'd0;
+		 clock_out <= (counter<DIVISOR/2)?1'b1:1'b0;
+		end
+
+endmodule
