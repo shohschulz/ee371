@@ -68,11 +68,8 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 	line_drawer lines (.clk, .reset(SW[0]|| done),.x0, .y0, .x1, .y1, .x, .y, .done);
 	
 	assign LEDR[9] = (ps == doneS);
-//	assign x0 = 0;
-//	assign y0 = 0;
-//	assign x1 = 20;
-//	assign y1 = 100;
-	
+
+	//animation FSM below
 	enum {start, S1, S2, S3, S4, doneS} ps, ns;
 	
 	always_comb begin
@@ -109,7 +106,6 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 			x1 <= 400;
 			y1 <= 190;
 		end
-		//dummy stage, used for extra clock cycle
 		if (ps == S3) begin
 			x0 <= 220;
 			y0 <= 100;
@@ -122,6 +118,7 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 			x1 <= 260;
 			y1 <= 170;
 		end
+		//dummy stage, this line will not be drawn, only meant for done
 		if (ps == doneS) begin
 			x0 <= 220;
 			y0 <= 100;
