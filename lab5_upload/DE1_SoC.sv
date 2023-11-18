@@ -73,7 +73,7 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 //	assign x1 = 20;
 //	assign y1 = 100;
 	
-	enum {start, S1, S2, S3, doneS} ps, ns;
+	enum {start, S1, S2, S3, S4, doneS} ps, ns;
 	
 	always_comb begin
 		case(ps)
@@ -83,8 +83,10 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 						else ns = S1;
 			S2: if(done) ns = S3;
 						else ns = S2;
-			S3: if(done) ns = doneS;
+			S3: if(done) ns = S4;
 						else ns = S3;
+			S4: if(done) ns = doneS;
+						else ns = S4;
 			doneS: ns = doneS; 
 		endcase
 	end
@@ -98,27 +100,33 @@ module DE1_SoC (HEX0, HEX1, HEX2, HEX3, HEX4, HEX5, KEY, LEDR, SW, CLOCK_50,
 		if (ps == S1) begin
 			x0 <= 300;
 			y0 <= 220;
-			x1 <= 300;
+			x1 <= 240;
 			y1 <= 260;
 		end
 		if (ps == S2) begin
 			x0 <= 340;
 			y0 <= 220;
-			x1 <= 340;
-			y1 <= 260;
+			x1 <= 400;
+			y1 <= 190;
 		end
 		//dummy stage, used for extra clock cycle
 		if (ps == S3) begin
-			x0 <= 0;
-			y0 <= 0;
-			x1 <= 0;
-			y1 <= 0;
+			x0 <= 220;
+			y0 <= 100;
+			x1 <= 260;
+			y1 <= 150;
+		end
+		if (ps == S4) begin
+			x0 <= 220;
+			y0 <= 100;
+			x1 <= 260;
+			y1 <= 170;
 		end
 		if (ps == doneS) begin
-			x0 <= 0;
-			y0 <= 0;
-			x1 <= 0;
-			y1 <= 0;
+			x0 <= 220;
+			y0 <= 100;
+			x1 <= 260;
+			y1 <= 170;
 		end
 	end
 
