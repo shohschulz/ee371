@@ -22,3 +22,4 @@ module gameState (clk, reset, collision, done);
     end
 
     assign done = (ps == OVER);
+endmodule
