@@ -17,7 +17,7 @@ collision, r, g, b)
     input logic [8:0] finalYBot3, finalYTop3;
     input logic [9:0] finalObsLeft3, finalObsRight3;
     input logic [7:0] redGameOver, greenGameOver, yellowGameOver;
-    input logic collision; 
+    input logic collision, reset; 
     output logic [7:0] r, g, b; 
 //draw game over screen 
 
