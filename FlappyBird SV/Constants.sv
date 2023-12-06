@@ -10,7 +10,13 @@ package Constants;
     parameter OBSTACLE_MAX_DISTANCE = 10'd680;
     parameter OBSTACLE_WIDTH = 6'd40;
     parameter TIME_TO_OBSTACLE = 6'd50; //tbd
+    parameter OBSTACLE_STARTING_HEIGHT_TOP = 7'd120;
+    parameter OBSTACLE_STARTING_HEIGHT_BOT = 7'd360;
+    parameter OBSTACLE_STARTING_DISTANCE1 = 8'd200; 
+    parameter OBSTACLE_STARTING_DISTANCE2 = 8'd350; 
+    parameter OBSTACLE_STARTING_DISTANCE2 = 8'd500; 
 
     //Bird Width
-    
-    parameter BIRD_WIDTH = 6'40; 
+    parameter BIRD_STARTING_HEIGHT = 8'd240;
+    parameter BIRD_STARTING_DISTANCE = 7'd80; //left
+    parameter BIRD_WIDTH = 6'd40; 

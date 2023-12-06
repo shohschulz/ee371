@@ -6,7 +6,7 @@ import Constants::*;
 
 module Obstacle(clk, reset, 
 startingYBottom, startingX, startingYTop,
-yBot, x, yTop
+yBot, x, yTop,
 );
     input logic [9:0] startingX;
     input logic [8:0] startingYTop, startingYBottom;
@@ -19,7 +19,7 @@ yBot, x, yTop
         if(x <= 10'd0) begin
             currentX = Constants::OBSTACLE_MAX_DISTANCE; //generate obstacle at end of screen
             currentYBot = $urrandom%Constants::OBSTACLE_MAX_Y;
-            currentYTop = $urrandom%Constants::OBSTACLE_MAX_Y;
+            currentYTop = = $urrandom%Constants::OBSTACLE_MAX_Y;
             if(currentYBot < Constants::OBSTACLE_MIN_Y) begin
                 currentYBot = Constants::OBSTACLE_MIN_Y;
             end
@@ -42,7 +42,7 @@ yBot, x, yTop
         else begin
             x <= currentX; 
             yBot <= currentYBot; 
-            yTop <= currentYTop;
+            yTop <= currentYTop
         end
     end
 endmodule
@@ -68,7 +68,7 @@ module Obstacle_testbench();
     reset <= 0; @(posedge clk);
                 @(posedge clk); 
     for (int i = 0; i < 500; i++) begin //check that x is properly decrementing
-                @(posedge clk);
+                (@posedge clk);
     end
                 @(posedge clk); //check to see a new "random" obstacle has been created                 
                 @(posedge clk);
