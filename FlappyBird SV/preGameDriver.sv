@@ -6,7 +6,7 @@ finalObsLeft1, finalObsRight1, finalYBot1, finalYTop1, //obstacle1 dimensions
 finalObsLeft2, finalObsRight2, finalYBot2, finalYTop2, //obstacle2 dimensions
 finalObsLeft3, finalObsRight3, finalYBot3, finalYTop3, //obstacle2 dimensions
 yScreenMax, yScreenMin, //Screen dimensions
-collision)
+collision, r, g, b)
     input logic [7:0] x, y;
     input logic [8:0] birdTop, birdBot, birdLeft, birdRight; 
     input logic [8:0] yScreenMax, yScreenMin; 
