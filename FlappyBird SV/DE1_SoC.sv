@@ -5,7 +5,7 @@ module DE1_SoC(
   input logic CLOCK_50;
   input logic [3:0] KEY;
   input logic [9:0] SW;
-  output logic [6:0] HEX0, HEX1, HEX2, HEX3;
+  output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5;
   output VGA_BLANK_N, VGA_CLK, VGA_HS, VGA_SYNC_N, VGA_VS;
   output [7:0] VGA_R, VGA_G, VGA_B;
     
@@ -65,7 +65,7 @@ CollisionUnit collision (.birdTop, .birdBot, .birdLeft, .birdRight,
 .yScreenMin, .yScreenMax, .collision);
     logic done; 
 GameStateTracker FSM (.clk, .reset, .collision, .done);
-    logic x, y;
+    
     logic redGameOver, greenGameOver, yellowGameOver;
 preGameDriver coloringLogic (.reset, .x, .y, .redGameOver, .greenGameOver, .yellowGameOver, 
 .birdTop, .birdBot, .birdLeft, .birdRight, //bird dimensions
@@ -73,17 +73,27 @@ preGameDriver coloringLogic (.reset, .x, .y, .redGameOver, .greenGameOver, .yell
 .finalObsLeft2, .finalObsRight2, .finalYBot2, .finalYTop2, //obstacle2 dimensions
 .finalObsLeft3, .finalObsRight3, .finalYBot3, .finalYTop3, //obstacle2 dimensions
 .yScreenMax, .yScreenMin, //Screen dimensions
-.collision, r, g, g);
+.collision, r, g, b);
+
     logic [4:0] count;
-    logic [9:0] largest_value;
+    logic [9:0] largest_value[2:0];
     logic [10:0] score;
 counter cyclethroughMemory (.out(count), .clk(CLOCK_50), .reset); //fast clk
+
 gameOverStorage memory (.address(count), .clock(CLOCK_50), .data(score), .wren(collision), .largest_value); //fast clk
 
 ScoreCounterLogic currentScore(.clk(CLOCK_50), .reset, .done, .finalObsRight1, .finalObsRight2, .finalObsRight3
 .score(score));
-
+    logic [29:0] out;
+finalScoreStorage finalScore (.collision, .largest_value, .score, .out)
 //score display
-seg7 hex5(.hex({2'b0, score[[9:8]]}), .leds(HEX5));
-seg7 hex4(.hex(score[7:4]), .leds(HEX4));
-seg7 hex3(.hex(score[3:0]), .leds(HEX3));
+seg7 hex5(.hex(out[27:24]), .leds(HEX5));
+seg7 hex4(.hex(out[23:20]), .leds(HEX4));
+
+seg7 hex3(.hex(out[17:14]), .leds(HEX3));
+seg7 hex2(.hex(out[13:10]), .leds(HEX2));
+
+seg7 hex1 (.hex(out[7:4]), .leds(HEX1));
+seg7 hex0 (.hex(out[3:0]), .leds(HEX0));
+
+endmodule
