@@ -23,15 +23,15 @@ collision, r, g, b)
 
 //draw reset screen 
 always_comb begin
-    if(reset) begin //red
+    if(reset) begin //white
         r = 255; 
+        g = 255;
+        b = 255;
+    end
+    if(collision) begin  //red
+        r = 255;
         g = 0;
         b = 0;
-    end
-    if(collision) begin 
-        r = redGameOver;
-        g = greenGameOver;
-        b = yellowGameOver
     end
     else if ((x <= BirdRight && x >= BirdLeft) && (y <= BirdBot && y >= BirdTop)) begin
         r = 255; // yellow
