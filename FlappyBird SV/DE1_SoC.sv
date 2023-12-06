@@ -65,7 +65,7 @@ CollisionUnit collision (.birdTop, .birdBot, .birdLeft, .birdRight,
 .yScreenMin, .yScreenMax, .collision);
     logic done; 
 GameStateTracker FSM (.clk, .reset, .collision, .done);
-    
+    logic x, y;
     logic redGameOver, greenGameOver, yellowGameOver;
 preGameDriver coloringLogic (.reset, .x, .y, .redGameOver, .greenGameOver, .yellowGameOver, 
 .birdTop, .birdBot, .birdLeft, .birdRight, //bird dimensions
@@ -73,7 +73,7 @@ preGameDriver coloringLogic (.reset, .x, .y, .redGameOver, .greenGameOver, .yell
 .finalObsLeft2, .finalObsRight2, .finalYBot2, .finalYTop2, //obstacle2 dimensions
 .finalObsLeft3, .finalObsRight3, .finalYBot3, .finalYTop3, //obstacle2 dimensions
 .yScreenMax, .yScreenMin, //Screen dimensions
-.collision);
+.collision, r, g, g);
     logic [4:0] count;
     logic [9:0] largest_value;
     logic [10:0] score;
